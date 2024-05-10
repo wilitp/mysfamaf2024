@@ -1,6 +1,6 @@
 
 from random import random
-from typing import Any, List
+from typing import Any, List, Optional
 
 
 def discreta_general(p: List[float], x: List[Any]):
@@ -53,3 +53,30 @@ def subconjunto(a: List[Any], r):
     permutacion(acopy)
 
     return acopy[0:r]
+
+
+def rechazo(simy, px, py, c: Optional[float] = None, x_vals: Optional[List] = None):
+
+    if c is None and x_vals is None:
+        raise Exception("c y x_vals no pueden ser al mismo tiempo")
+    
+
+    if c is None:
+        assert x_vals is not None
+
+        c = max(px(x) / py(x) for x in x_vals)
+    
+    y = simy()
+
+
+    while True:
+        U = random()
+
+        if U < px(y) / (c * py(y)):
+            return y
+
+def aprox_sum(a, b, term, n):
+
+    return sum(term((a + (b - a) * random())) for _ in range(n)) * (1/n)* (b-a+1)
+
+
