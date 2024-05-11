@@ -29,10 +29,6 @@ def urna(px: Callable[[Any], float], x_vals: List[Any]):
 
     return urn[U]
 
-
-    
-
-
 def sim_esp_var(sim, n):
     esp  = sum(sim() for _ in range(0, n))/n
     esp2 = sum(sim()**2 for _ in range(0, n))/n
@@ -133,19 +129,55 @@ def aprox_sum(a, b, term, n):
 
     return sum(term((a + (b - a) * random())) for _ in range(n)) * (1/n)* (b-a+1)
 
+def trans_discreta_general_infinita_new(px, mu: float = 0, rec: Optional[Callable[[float], float]]=None ):
+    # mu es el punto de partida para la busqueda ascendente
+
+    prob = px(0)
+    F = prob
+
+    for j in range(1, int(mu) + 1):
+        # si tenemos una funcion recursiva aprovechamos el valor anterior
+        if rec is not None:
+            F += rec(prob)
+        else:
+            F += px(j) 
+
+    U = random()
+    
+    if U >= F:
+        j = int(mu) + 1
+
+
+        while U >= F:
+            # si tenemos una funcion recursiva aprovechamos el valor anterior
+            if rec is not None:
+                F += rec(prob)
+            else:
+                F += px(j) 
+            j += 1
+        
+        return j - 1
+    else:
+        j = int(mu)
+        while U < F:
+            F -= px(j)
+            j -= 1
+
+        return j+1
 
 def trans_discreta_general_infinita(px):
     U = random()
-
+    
     i, F = 0, px(0)
 
-    while U >= F:
+    while F <= U:
         i += 1
         F += px(i)
 
     return i
 
 def trans_discreta_general_infinita_optimizada(px, mu):
+    # mu es el punto de partida para la busqueda
 
     F = px(0)
 
@@ -170,3 +202,10 @@ def trans_discreta_general_infinita_optimizada(px, mu):
 
         return j+1
 
+def composicion(alpha, simx, simy):
+    U = random()
+
+    if U <= alpha:
+        return simx()
+    else:
+        return simy()
