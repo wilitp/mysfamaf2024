@@ -1,4 +1,5 @@
 
+from functools import reduce
 from random import random
 from typing import Any, Callable, List, Optional
 
@@ -106,17 +107,21 @@ def subconjunto(a: List[Any], r):
 
     return acopy[0:r]
 
+ProbFunc = Callable[[float], float]
 
-def rechazo(simy, px, py, c: Optional[float] = None, x_vals: Optional[List] = None):
+def rechazo(simy, px: ProbFunc, py: ProbFunc, c: Optional[float] = None, x_vals: Optional[List[float | int]] = None):
 
     if c is None and x_vals is None:
         raise Exception("c y x_vals no pueden ser al mismo tiempo")
     
 
     if c is None:
-        assert x_vals is not None
+
+        assert x_vals is not None and len(x_vals) != 0
 
         c = max(px(x) / py(x) for x in x_vals)
+
+        c = max(c, 1)
     
     while True:
         y = simy()
@@ -209,3 +214,26 @@ def composicion(alpha, simx, simy):
         return simx()
     else:
         return simy()
+
+def composicion_new(ps: List[float], sims: List[Callable[[], float]]):
+
+    assert len(ps) == len(sims) != 0
+    assert sum(ps) == 1
+    acum = []
+
+    u = random()
+
+    i, acc = 0, ps[0]
+
+    while u >= acc:
+        i += 1
+        acc += ps[i]
+    
+    return sims[i]()
+
+
+
+
+def trans_inversa_con_funcion(F_1: ProbFunc):
+    u = random()
+    return F_1(u)
