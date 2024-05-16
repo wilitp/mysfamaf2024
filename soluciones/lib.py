@@ -1,5 +1,3 @@
-
-from functools import reduce
 from random import random
 from typing import Any, Callable, List, Optional
 
@@ -30,7 +28,7 @@ def urna(px: Callable[[Any], float], x_vals: List[Any]):
 
     return urn[U]
 
-def sim_esp_var(sim, n):
+def sim_esp_var(sim: Callable[[], float], n: int):
     esp  = sum(sim() for _ in range(0, n))/n
     esp2 = sum(sim()**2 for _ in range(0, n))/n
 
