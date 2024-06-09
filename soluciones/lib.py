@@ -1,5 +1,48 @@
+
 from random import random
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, Tuple
+import math
+from functools import reduce
+
+
+def montecarlo_multi(g, intervals: List[Tuple[float, float]], n: int):
+    """
+    Calcula una integral múltiple
+    """
+
+    assert g.__code__.co_argcount == len(intervals)
+
+    # obtener a partir de los x_i los u_i a partir de cambios de variable
+    # el cambio de variable depende de si los limites es a, b ambos finitos
+    # o si son a = 0 y b = infinito
+    def aux(): 
+
+        factors = []
+        args = []
+
+        for a, b in intervals:
+            x = random()
+            u = (x * (b - a) + a) if b is not math.inf else 1/x - 1
+            p = (b - a) if b is not math.inf else 1/x**2
+            args.append(u)
+            factors.append(p)
+        
+        return [reversed(args), factors]
+
+    # generador de samples para obtener el promedio
+    def gen_func():
+        for _ in range(0, n):
+
+            args, prods = aux()
+
+            prod = reduce(lambda x, y : x*y, prods)
+
+            yield g(*args) * prod
+
+    gen = gen_func()
+
+    # devolver el promedio de la muestra generada
+    return (sum(gen))/n
 
 def urna(px: Callable[[Any], float], x_vals: List[Any]):
     # 10 decimales de definicion maxima
@@ -235,3 +278,51 @@ def composicion_new(ps: List[float], sims: List[Callable[[], float]]):
 def trans_inversa_con_funcion(F_1: ProbFunc):
     u = random()
     return F_1(u)
+
+class RecurrentStats:
+    var: float | None = None
+    mean: float | None = None
+    n: int = 0
+
+
+    def add(self, x: float):
+
+        if self.n == 0:
+
+
+            self.n = 1
+            self.var = 1
+            self.mean = x
+            return
+        
+
+        assert(self.mean is not None)
+        assert(self.var is not None)
+        # Aplicar formulas recursivas
+        new_mean = self.mean + (x - self.mean)/(self.n+1)
+
+        new_var = (1- 1/self.n) * self.var + (self.n+1) * (new_mean - self.mean)**2
+
+        self.mean = new_mean
+        self.var = new_var
+        self.n += 1
+    
+    @property
+    def get_mean(self):
+        if self.n == 0:
+            raise Exception("No data")
+
+        assert(self.mean is not None)
+
+        return self.mean
+
+    @property
+    def get_var(self):
+        if self.n == 0:
+            raise Exception("No data")
+        assert(self.var is not None)
+
+        return self.var
+    
+    
+
