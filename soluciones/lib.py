@@ -4,6 +4,8 @@ from typing import Any, Callable, List, Optional, Tuple
 import math
 from functools import reduce
 
+import numpy as np
+
 
 def montecarlo_multi(g, intervals: List[Tuple[float, float]], n: int):
     """
@@ -104,7 +106,7 @@ def trans_inversa_general(p: Callable[[Any], float], x_vals: List[Any]):
     i, F = 0, p(r)
 
     # F es la acumulada
-    while U >= F:
+    while U >= F and i < len(x_vals):
         i += 1
         F += p(x_vals[i])
     
@@ -324,5 +326,52 @@ class RecurrentStats:
 
         return self.var
     
-    
 
+def estadistico_prueba(ps, Ns):
+    # Calcula el estadistico de prueba para hacer el test de chi-cuadrado de Pearson
+    T = sum((N - sum(Ns)*ps[i])**2 / (sum(Ns)*ps[i]) for (i, N) in enumerate(Ns))
+    return T
+
+def estadistico_prueba_sim(ps: List[float], n: int):
+    # Calcula el estadistico de prueba para hacer el test de chi-cuadrado de Pearson
+    # a partir de una muestra simulada
+
+    sim = lambda : trans_inversa_general_optimizada(lambda i : ps[i], list(range(len(ps))))
+    Ns = np.zeros(len(ps))
+
+    for _ in range(n):
+        Ns[sim()] += 1
+    
+    return estadistico_prueba(ps, Ns)
+    
+def estadistico_prueba_sim_binomiales(ps: List[float], m: int):
+    # Calcula el estadistico de prueba para hacer el test de chi-cuadrado de Pearson
+    # a partir de una muestra simulada
+    # Usar este cuando n sea muy grande(es mas barato computacionalmente)
+
+    n = m
+
+    Ns = [0] * len(ps)
+
+    p_accum = 0 # probabilidad acumulada de los valores anteriores
+
+    for i, pi in enumerate(ps):
+        Ns[i] = np.random.binomial(n, pi/(1-p_accum))
+    
+    return estadistico_prueba(ps, Ns)
+
+def estadistico_smirnov(sample: List[float], F: Callable[[float], float]):
+    sample = sorted(sample)
+
+    n = len(sample)
+
+    d = max(max((i+1)/n - F(x), F(x) - i/n) for i, x in enumerate(sample))
+
+    return d
+
+def estadistico_smirnov_sim(n):
+    sample = sorted([random() for _ in range(n)])
+
+    d = estadistico_smirnov(sample, lambda x : x)
+
+    return d
